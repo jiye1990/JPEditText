@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="JPEditText">
+        <attr name="jp_baseColor" format="color" />
+        <attr name="jp_errorColor" format="color" />
+        <attr name="jp_primaryColor" format="color" />
+        <attr name="jp_underlineColor" format="color" />
+
+        <attr name="jp_labelText" format="string" />
+
+        <attr name="jp_labelTextSize" format="dimension" />
+        <attr name="jp_bottomTextSize" format="dimension" />
+
+        <attr name="jp_minCharacters" format="integer" />
+        <attr name="jp_maxCharacters" format="integer" />
+
+        <attr name="jp_hideUnderline" format="boolean" />
+        <attr name="jp_hideBottomText" format="boolean" />
+
+        <attr name="jp_labelSpacing" format="dimension" />
+
+        <attr name="jp_iconSize" format="dimension" />
+        <attr name="jp_iconOuterWidth" format="dimension" />
+        <attr name="jp_iconOuterHeight" format="dimension" />
+        <attr name="jp_iconRight" format="reference" />
+        <attr name="jp_iconPadding" format="dimension" />
+
+        <attr name="jp_singleLineEllipsis" format="boolean" />
+        <attr name="jp_minBottomTextLines" format="integer" />
+    </declare-styleable>
+</resources>
