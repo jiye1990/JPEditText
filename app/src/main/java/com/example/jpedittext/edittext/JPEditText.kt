@@ -1,5 +1,6 @@
 package com.example.jpedittext.edittext
 
+import android.annotation.SuppressLint
 import android.annotation.TargetApi
 import android.content.Context
 import android.graphics.Bitmap
@@ -9,15 +10,13 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.*
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.content.ContextCompat
-import com.example.jpedittext.edittext.validation.METLengthChecker
 import com.example.jpedittext.R
-import kotlin.math.roundToInt
+import com.example.jpedittext.edittext.validation.METLengthChecker
 
 
 class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, View.OnTouchListener {
@@ -92,15 +91,10 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         }
     }
 
+    @SuppressLint("ResourceType")
     private fun init(context: Context, attrs: AttributeSet?) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            background = null
-        else
-            setBackgroundDrawable(null)
+        val defaultBaseColor = ContextCompat.getColor(context, R.color.gray100)
 
-        val defaultBaseColor = ContextCompat.getColor(context,
-            R.color.gray100
-        )
         defaultLabelColor = ContextCompat.getColor(context, R.color.gray500)
         bottomSpacing = resources.getDimensionPixelSize(R.dimen.bottom_spacing)
         underlineSpacing = resources.getDimensionPixelSize(R.dimen.underline_spacing)
@@ -111,8 +105,8 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
         labelText = typedArray.getString(R.styleable.JPEditText_jp_labelText)
         labelTextSize = typedArray.getDimension(R.styleable.JPEditText_jp_labelTextSize, resources.getDimension(
-                R.dimen.label_text_size
-            ))
+            R.dimen.label_text_size
+        ))
         labelSpacing = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_labelSpacing, resources.getDimension(R.dimen.label_spacing).toInt())
         minCharacters = typedArray.getInt(R.styleable.JPEditText_jp_minCharacters, 0)
         maxCharacters = typedArray.getInt(R.styleable.JPEditText_jp_maxCharacters, 0)
@@ -130,6 +124,25 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         iconOuterWidth = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterWidth, 0)
         iconOuterHeight = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterHeight, 0)
         iconPadding = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconPadding, 0)
+
+        val paddings = intArrayOf(
+            android.R.attr.padding, // 0
+            android.R.attr.paddingLeft, // 1
+            android.R.attr.paddingTop, // 2
+            android.R.attr.paddingRight, // 3
+            android.R.attr.paddingBottom // 4
+        )
+        val paddingsTypedArray = context.obtainStyledAttributes(attrs, paddings)
+        val padding = paddingsTypedArray.getDimensionPixelSize(0, 0)
+        innerPaddingLeft = paddingsTypedArray.getDimensionPixelSize(1, padding)
+        innerPaddingTop = paddingsTypedArray.getDimensionPixelSize(2, padding)
+        innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding)
+        innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
+            background = null
+        else
+            setBackgroundDrawable(null)
 
         initPadding()
         checkCharactersCount()
@@ -197,7 +210,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     }
 
     /**
-     * use [.setPaddings] instead, or the paddingTop and the paddingBottom may be set incorrectly.
+     * use [setPaddings] instead, or the paddingTop and the paddingBottom may be set incorrectly.
      */
     @Deprecated("")
     override fun setPadding(left: Int, top: Int, right: Int, bottom: Int) {
@@ -205,7 +218,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     }
 
     /**
-     * Use this method instead of [.setPadding] to automatically set the paddingTop and the paddingBottom correctly.
+     * Use this method instead of [setPadding] to automatically set the paddingTop and the paddingBottom correctly.
      */
     fun setPaddings(left: Int, top: Int, right: Int, bottom: Int) {
         innerPaddingTop = top
@@ -322,10 +335,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     }
 
     override fun onDraw(canvas: Canvas) {
-        // 에디트 모드에서는 더이상 다른 것을 출력하지 않고 종료
-        if (isInEditMode)
-            return
-
         val startX = scrollX
         val endX = scrollX + width
         var lineStartY = scrollY + height - paddingBottom
@@ -471,12 +480,10 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
         val x = event.x
         val y = event.y
-
-        width - iconOuterWidth
-
-        val startX = /*scrollX +*/if (icon == null) 0 else iconOuterWidth + iconPadding
-        val endX = /*scrollX +*/if (icon == null) width else width - iconOuterWidth - iconPadding
-        val buttonLeft = if (isRTL()) startX else endX
+        val startX = if (icon == null) 0 else iconOuterWidth + iconPadding
+        val endX = if (icon == null) width else width - iconOuterWidth - iconPadding
+        val buttonLeft: Int
+        buttonLeft = if (isRTL()) startX else endX
         val buttonTop =
             scrollY + height - paddingBottom - iconOuterHeight + (iconOuterHeight - icon!!.height) / 2
         return x >= buttonLeft && x < buttonLeft + iconOuterWidth && y >= buttonTop && y < buttonTop + iconOuterHeight
@@ -485,21 +492,13 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     override fun afterTextChanged(s: Editable?) {
 
     }
+
     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
 
     }
 
     override fun onTextChanged(text: CharSequence?, start: Int, lengthBefore: Int, lengthAfter: Int) {
-/*        if (hasFocus() && (text!!.length in 1..7)) {
-            error = "8자 이상으로 부탁"
-            setUnderlineColor(errorColor)
-            hideBottomText = false
-        } else {
-            error = null
-            setUnderlineColor(primaryColor)
-            hideBottomText = true
-        }
-        postInvalidate()*/
+
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {

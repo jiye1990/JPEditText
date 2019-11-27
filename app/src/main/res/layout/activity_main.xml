@@ -15,8 +15,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="20dp"
-            android:padding="15dp"
             android:singleLine="true"
+            android:hint="힌트"
             android:textSize="16sp"
             app:jp_bottomTextSize="@dimen/bottom_text_size"
             app:jp_iconOuterHeight="16dp"
@@ -25,28 +25,9 @@
             app:jp_iconSize="16dp"
             app:jp_labelText="타이틀입니다"
             app:jp_labelTextSize="@dimen/label_text_size"
-            app:jp_maxCharacters="15"
-            app:jp_minCharacters="8"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
-
-        <com.example.jpedittext.edittext.JPEditText
-            android:id="@+id/jpEditText1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="20dp"
-            android:textSize="16sp"
-            app:jp_bottomTextSize="@dimen/bottom_text_size"
-            app:jp_iconOuterHeight="16dp"
-            app:jp_iconOuterWidth="16dp"
-            app:jp_iconRight="@drawable/ic_text_clear"
-            app:jp_iconSize="16dp"
-            app:jp_labelText="타이틀입니다"
-            app:jp_labelTextSize="@dimen/label_text_size"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/jpEditText" />
 
         <include
             android:id="@+id/testEdit"
@@ -57,6 +38,6 @@
             android:visibility="invisible"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/jpEditText1" />
+            app:layout_constraintTop_toBottomOf="@+id/jpEditText" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>
