@@ -21,9 +21,9 @@ import com.example.jpedittext.edittext.validation.METLengthChecker
 
 class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, View.OnTouchListener {
 
+    var hideBottomText: Boolean = true
     private var bottomSpacing: Int = 0
     private var bottomTextSize: Float = 0.0f
-    var hideBottomText: Boolean = true
     private var singleLineEllipsis: Boolean = false
     private var labelTextLayout: StaticLayout? = null
     private var bottomTextLayout: StaticLayout? = null
@@ -52,9 +52,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     private var lengthChecker: METLengthChecker? = null
 
-    private var minBottomTextLines: Int = 0
     private var underlineSize: Float = 0.0f
-    private var underlineColor: Int = 0
     private var underlineSpacing: Int = 0
 
     private var primaryColor: Int = 0
@@ -62,7 +60,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     private var baseColor: Int = 0
     private var defaultLabelColor: Int = 0
 
-    private var iconSize: Int = 0
     private var icon : Bitmap? = null
     private var iconOuterWidth: Int = 0
     private var iconOuterHeight: Int = 0
@@ -85,6 +82,8 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     override fun setError(error: CharSequence?) {
         errorText = error?.toString()
+        hideBottomText = error == null
+
         if (adjustBottomLines()) {
             initPadding()
             postInvalidate()
@@ -93,7 +92,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     @SuppressLint("ResourceType")
     private fun init(context: Context, attrs: AttributeSet?) {
-        val defaultBaseColor = ContextCompat.getColor(context, R.color.gray100)
 
         defaultLabelColor = ContextCompat.getColor(context, R.color.gray500)
         bottomSpacing = resources.getDimensionPixelSize(R.dimen.bottom_spacing)
@@ -108,22 +106,23 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
             R.dimen.label_text_size
         ))
         labelSpacing = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_labelSpacing, resources.getDimension(R.dimen.label_spacing).toInt())
-        minCharacters = typedArray.getInt(R.styleable.JPEditText_jp_minCharacters, 0)
-        maxCharacters = typedArray.getInt(R.styleable.JPEditText_jp_maxCharacters, 0)
-        minBottomTextLines = typedArray.getInt(R.styleable.JPEditText_jp_minBottomTextLines, 0)
+
         bottomTextSize = typedArray.getDimension(R.styleable.JPEditText_jp_bottomTextSize, resources.getDimension(R.dimen.bottom_text_size))
-//        hideBottomText = typedArray.getBoolean(R.styleable.JPEditText_jp_hideBottomText, true)
-        singleLineEllipsis = typedArray.getBoolean(R.styleable.JPEditText_jp_singleLineEllipsis, false)
-        underlineColor = typedArray.getColor(R.styleable.JPEditText_jp_underlineColor, defaultBaseColor)
+        hideLabelText = typedArray.getBoolean(R.styleable.JPEditText_jp_hideLabelText, false)
+
         primaryColor = typedArray.getColor(R.styleable.JPEditText_jp_primaryColor, ContextCompat.getColor(context, R.color.green500))
         errorColor = typedArray.getColor(R.styleable.JPEditText_jp_errorColor, ContextCompat.getColor(context, R.color.red500))
-        baseColor = typedArray.getColor(R.styleable.JPEditText_jp_baseColor, defaultBaseColor)
+        baseColor = typedArray.getColor(R.styleable.JPEditText_jp_baseColor, ContextCompat.getColor(context, R.color.gray100))
 
         icon = drawableToBitmap(typedArray.getDrawable(R.styleable.JPEditText_jp_iconRight))
-        iconSize = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconSize, 0)
         iconOuterWidth = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterWidth, 0)
         iconOuterHeight = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterHeight, 0)
         iconPadding = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconPadding, 0)
+
+        singleLineEllipsis = typedArray.getBoolean(R.styleable.JPEditText_jp_singleLineEllipsis, false)
+        minCharacters = typedArray.getInt(R.styleable.JPEditText_jp_minCharacters, 0)
+        maxCharacters = typedArray.getInt(R.styleable.JPEditText_jp_maxCharacters, 0)
+
 
         val paddings = intArrayOf(
             android.R.attr.padding, // 0
@@ -178,7 +177,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         val textMetrics = textPaint.fontMetrics
 
         var currentBottomLines = 1 // error text의 줄 수
-        extraPaddingTop = (labelSpacing + labelTextSize).toInt()
+        extraPaddingTop = if (!hideLabelText && labelText != null) (labelSpacing + labelTextSize).toInt() else 0
         extraPaddingBottom = underlineSpacing + underlineSize.dp2px(context) +
                 if (!hideBottomText)
                     (bottomSpacing + ((textMetrics.descent - textMetrics.ascent) * currentBottomLines).toInt())
@@ -281,7 +280,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
             return false
 
         if (errorText != null) {
-
             textPaint.textSize = bottomTextSize
 
             val alignment = if (gravity and Gravity.RIGHT == Gravity.RIGHT || isRTL())
@@ -310,9 +308,9 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         if (width == 0)
             return false
 
-        textPaint.textSize = labelTextSize
-
         if (labelText != null) {
+            textPaint.textSize = labelTextSize
+
             val alignment = if (gravity and Gravity.RIGHT == Gravity.RIGHT || isRTL())
                 Layout.Alignment.ALIGN_OPPOSITE
             else if (gravity and Gravity.LEFT == Gravity.LEFT)
@@ -343,13 +341,11 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         if (!isInternalValid()) // not valid
             paint.color = errorColor
         else if (!isEnabled) // disabled
-            paint.color =
-                if (underlineColor != -1) underlineColor else baseColor and 0x00ffffff or 0x44000000
+            paint.color = baseColor
         else if (hasFocus()) // focused
             paint.color = primaryColor
         else  // normal
-            paint.color =
-                if (underlineColor != -1) underlineColor else baseColor and 0x00ffffff or 0x1E000000
+            paint.color = baseColor
 
         lineStartY += underlineSpacing // edittext 글자 아래부터의 간격 추가
         canvas.drawRect(
@@ -427,8 +423,18 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         return minCharacters > 0 || maxCharacters > 0
     }
 
-    fun setUnderlineColor(color: Int) {
-        this.underlineColor = color
+    fun setUnderlineBaseColor(color: Int) {
+        this.baseColor = ContextCompat.getColor(context, color)
+        postInvalidate()
+    }
+
+    fun setUnderlineErrorColor(color: Int) {
+        this.errorColor = ContextCompat.getColor(context, color)
+        postInvalidate()
+    }
+
+    fun setUnderlinePrimaryColor(color: Int) {
+        this.primaryColor = ContextCompat.getColor(context, color)
         postInvalidate()
     }
 
@@ -498,7 +504,12 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     }
 
     override fun onTextChanged(text: CharSequence?, start: Int, lengthBefore: Int, lengthAfter: Int) {
+        /*error = if (hasFocus() && (text!!.length < minCharacters || text!!.length > maxCharacters))
+            "${minCharacters}자 이상 ${maxCharacters}자 이하로 입력해주세요."
+        else
+            null
 
+        postInvalidate()*/
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {

@@ -15,6 +15,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 
+        binding.jpEditText.setUnderlinePrimaryColor(android.R.color.holo_orange_dark)
+//        binding.jpEditText.setBottomTextSize(20f.dp2px(this))
+
+
         binding.jpEditText.addTextChangedListener(object :TextWatcher{
             override fun afterTextChanged(s: Editable?) {
 
@@ -25,15 +29,10 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                if (binding.jpEditText.hasFocus() && (s!!.length in 1..7)) {
-                    binding.jpEditText.error = "8자 이상으로 부탁"
-                    binding.jpEditText.setUnderlineColor(R.color.red500)
-                    binding.jpEditText.hideBottomText = false
-                } else {
-                    binding.jpEditText.error = null
-                    binding.jpEditText.setUnderlineColor(R.color.green500)
-                    binding.jpEditText.hideBottomText = true
-                }
+                binding.jpEditText.error = if (binding.jpEditText.hasFocus() && (s!!.length < 8 || s!!.length > 16))
+                    "8자 이상, 16자 이하로 부탁합니다."
+                else
+                    null
                 binding.jpEditText.invalidate()
             }
         })

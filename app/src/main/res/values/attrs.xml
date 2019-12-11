@@ -14,12 +14,11 @@
         <attr name="jp_minCharacters" format="integer" />
         <attr name="jp_maxCharacters" format="integer" />
 
+        <attr name="jp_hideLabelText" format="boolean" />
         <attr name="jp_hideUnderline" format="boolean" />
-        <attr name="jp_hideBottomText" format="boolean" />
 
         <attr name="jp_labelSpacing" format="dimension" />
 
-        <attr name="jp_iconSize" format="dimension" />
         <attr name="jp_iconOuterWidth" format="dimension" />
         <attr name="jp_iconOuterHeight" format="dimension" />
         <attr name="jp_iconRight" format="reference" />
