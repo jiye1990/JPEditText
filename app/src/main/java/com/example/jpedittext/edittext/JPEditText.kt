@@ -177,7 +177,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         val textMetrics = textPaint.fontMetrics
 
         var currentBottomLines = 1 // error text의 줄 수
-        extraPaddingTop = if (!hideLabelText && labelText != null) (labelSpacing + labelTextSize).toInt() else 0
+        extraPaddingTop = labelSpacing + if (!hideLabelText && labelText != null) labelTextSize.toInt() else 0
         extraPaddingBottom = underlineSpacing + underlineSize.dp2px(context) +
                 if (!hideBottomText)
                     (bottomSpacing + ((textMetrics.descent - textMetrics.ascent) * currentBottomLines).toInt())
