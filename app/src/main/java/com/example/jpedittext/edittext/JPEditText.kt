@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.text.*
@@ -19,9 +20,10 @@ import com.example.jpedittext.R
 import com.example.jpedittext.edittext.validation.METLengthChecker
 
 
-class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, View.OnTouchListener {
+class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener,
+    View.OnTouchListener {
 
-    var hideBottomText: Boolean = true
+    private var hideBottomText: Boolean = true
     private var bottomSpacing: Int = 0
     private var bottomTextSize: Float = 0.0f
     private var singleLineEllipsis: Boolean = false
@@ -42,6 +44,8 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     private var hideLabelText: Boolean = false
     private var labelSpacing: Int = 0
     private var labelTextSize: Float = 0.0f
+    private var labelTextColor: Int = 0
+    private var labelTextStyle: Int = 0
     private var labelText: String? = null
 
     private var errorText: String? = null
@@ -58,9 +62,8 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     private var primaryColor: Int = 0
     private var errorColor: Int = 0
     private var baseColor: Int = 0
-    private var defaultLabelColor: Int = 0
 
-    private var icon : Bitmap? = null
+    private var icon: Bitmap? = null
     private var iconOuterWidth: Int = 0
     private var iconOuterHeight: Int = 0
     private var iconPadding: Int = 0
@@ -69,20 +72,29 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     private var charactersCountValid: Boolean = false
 
+    private var forceChangeLineColor = false
+    private var changeColor = COLOR.BASE
+
 
     constructor(context: Context) : super(context) {
         init(context, null)
     }
+
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
         init(context, attrs)
     }
-    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
         init(context, attrs)
     }
 
     override fun setError(error: CharSequence?) {
         errorText = error?.toString()
-        hideBottomText = error == null
+        hideBottomText = error.isNullOrEmpty()
 
         if (adjustBottomLines()) {
             initPadding()
@@ -93,33 +105,57 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     @SuppressLint("ResourceType")
     private fun init(context: Context, attrs: AttributeSet?) {
 
-        defaultLabelColor = ContextCompat.getColor(context, R.color.gray500)
         bottomSpacing = resources.getDimensionPixelSize(R.dimen.bottom_spacing)
         underlineSpacing = resources.getDimensionPixelSize(R.dimen.underline_spacing)
         bottomEllipsisSize = resources.getDimensionPixelSize(R.dimen.bottom_ellipsis_height)
         underlineSize = 1f //resources.getDimension(R.dimen.underline_size)
 
-        var typedArray = context.obtainStyledAttributes(attrs, R.styleable.JPEditText)
+        val typedArray = context.obtainStyledAttributes(attrs, R.styleable.JPEditText)
 
         labelText = typedArray.getString(R.styleable.JPEditText_jp_labelText)
-        labelTextSize = typedArray.getDimension(R.styleable.JPEditText_jp_labelTextSize, resources.getDimension(
-            R.dimen.label_text_size
-        ))
-        labelSpacing = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_labelSpacing, resources.getDimension(R.dimen.label_spacing).toInt())
+        labelTextStyle = typedArray.getInt(R.styleable.JPEditText_jp_labelTextStyle, 0)
+        labelTextSize = typedArray.getDimension(
+            R.styleable.JPEditText_jp_labelTextSize, resources.getDimension(
+                R.dimen.label_text_size
+            )
+        )
+        labelTextColor = typedArray.getColor(
+            R.styleable.JPEditText_jp_labelTextColor,
+            ContextCompat.getColor(context, R.color.gray500)
+        )
+        labelSpacing = typedArray.getDimensionPixelSize(
+            R.styleable.JPEditText_jp_labelSpacing,
+            resources.getDimension(R.dimen.label_spacing).toInt()
+        )
 
-        bottomTextSize = typedArray.getDimension(R.styleable.JPEditText_jp_bottomTextSize, resources.getDimension(R.dimen.bottom_text_size))
+        bottomTextSize = typedArray.getDimension(
+            R.styleable.JPEditText_jp_bottomTextSize,
+            resources.getDimension(R.dimen.bottom_text_size)
+        )
         hideLabelText = typedArray.getBoolean(R.styleable.JPEditText_jp_hideLabelText, false)
 
-        primaryColor = typedArray.getColor(R.styleable.JPEditText_jp_primaryColor, ContextCompat.getColor(context, R.color.green500))
-        errorColor = typedArray.getColor(R.styleable.JPEditText_jp_errorColor, ContextCompat.getColor(context, R.color.red500))
-        baseColor = typedArray.getColor(R.styleable.JPEditText_jp_baseColor, ContextCompat.getColor(context, R.color.gray100))
+        primaryColor = typedArray.getColor(
+            R.styleable.JPEditText_jp_primaryColor,
+            ContextCompat.getColor(context, R.color.green500)
+        )
+        errorColor = typedArray.getColor(
+            R.styleable.JPEditText_jp_errorColor,
+            ContextCompat.getColor(context, R.color.red500)
+        )
+        baseColor = typedArray.getColor(
+            R.styleable.JPEditText_jp_baseColor,
+            ContextCompat.getColor(context, R.color.gray100)
+        )
 
         icon = drawableToBitmap(typedArray.getDrawable(R.styleable.JPEditText_jp_iconRight))
-        iconOuterWidth = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterWidth, 0)
-        iconOuterHeight = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterHeight, 0)
+        iconOuterWidth =
+            typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterWidth, 0)
+        iconOuterHeight =
+            typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconOuterHeight, 0)
         iconPadding = typedArray.getDimensionPixelSize(R.styleable.JPEditText_jp_iconPadding, 0)
 
-        singleLineEllipsis = typedArray.getBoolean(R.styleable.JPEditText_jp_singleLineEllipsis, false)
+        singleLineEllipsis =
+            typedArray.getBoolean(R.styleable.JPEditText_jp_singleLineEllipsis, false)
         minCharacters = typedArray.getInt(R.styleable.JPEditText_jp_minCharacters, 0)
         maxCharacters = typedArray.getInt(R.styleable.JPEditText_jp_maxCharacters, 0)
 
@@ -138,10 +174,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         innerPaddingRight = paddingsTypedArray.getDimensionPixelSize(3, padding)
         innerPaddingBottom = paddingsTypedArray.getDimensionPixelSize(4, padding)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN)
-            background = null
-        else
-            setBackgroundDrawable(null)
+        background = null
 
         initPadding()
         checkCharactersCount()
@@ -163,9 +196,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
     private fun isRTL(): Boolean {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            return false
-        }
         val config = resources.configuration
         return config.layoutDirection == View.LAYOUT_DIRECTION_RTL
     }
@@ -176,8 +206,9 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         textPaint.textSize = bottomTextSize
         val textMetrics = textPaint.fontMetrics
 
-        var currentBottomLines = 1 // error text의 줄 수
-        extraPaddingTop = labelSpacing + if (!hideLabelText && labelText != null) labelTextSize.toInt() else 0
+        val currentBottomLines = 1 // error text의 줄 수
+        extraPaddingTop =
+            labelSpacing + if (!hideLabelText && labelText != null) labelTextSize.toInt() else 0
         extraPaddingBottom = underlineSpacing + underlineSize.dp2px(context) +
                 if (!hideBottomText)
                     (bottomSpacing + ((textMetrics.descent - textMetrics.ascent) * currentBottomLines).toInt())
@@ -211,7 +242,13 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     /**
      * use [setPaddings] instead, or the paddingTop and the paddingBottom may be set incorrectly.
      */
-    @Deprecated("")
+    @Deprecated(
+        "",
+        ReplaceWith(
+            "super.setPadding(left, top, right, bottom)",
+            "androidx.appcompat.widget.AppCompatEditText"
+        )
+    )
     override fun setPadding(left: Int, top: Int, right: Int, bottom: Int) {
         super.setPadding(left, top, right, bottom)
     }
@@ -219,7 +256,7 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     /**
      * Use this method instead of [setPadding] to automatically set the paddingTop and the paddingBottom correctly.
      */
-    fun setPaddings(left: Int, top: Int, right: Int, bottom: Int) {
+    private fun setPaddings(left: Int, top: Int, right: Int, bottom: Int) {
         innerPaddingTop = top
         innerPaddingBottom = bottom
         innerPaddingLeft = left
@@ -235,37 +272,29 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         val text: String
         val contentText = getText().toString()
         text = if (minCharacters <= 0) {
-            if (isRTL())
-                maxCharacters.toString() + " / " + checkLength(contentText)
-            else checkLength(
-                contentText).toString() + " / " + maxCharacters
+            if (isRTL()) maxCharacters.toString() + " / " + checkLength(contentText)
+            else checkLength(contentText).toString() + " / " + maxCharacters
         } else if (maxCharacters <= 0) {
             if (isRTL()) "+" + minCharacters + " / " + checkLength(contentText)
-            else checkLength(
-                contentText).toString() + " / " + minCharacters + "+"
+            else checkLength(contentText).toString() + " / " + minCharacters + "+"
         } else {
-            if (isRTL())
-                maxCharacters.toString() + "-" + minCharacters + " / " + checkLength(contentText)
+            if (isRTL()) "$maxCharacters-$minCharacters / " + checkLength(contentText)
             else checkLength(contentText).toString() + " / " + minCharacters + "-" + maxCharacters
         }
         return text
     }
 
-    private fun getBottomTextLeftOffset(): Int {
-        return if (isRTL()) getCharactersCounterWidth() else getBottomEllipsisWidth()
-    }
+    private fun getBottomTextLeftOffset() =
+        if (isRTL()) getCharactersCounterWidth() else getBottomEllipsisWidth()
 
-    private fun getBottomTextRightOffset(): Int {
-        return if (isRTL()) getBottomEllipsisWidth() else getCharactersCounterWidth()
-    }
+    private fun getBottomTextRightOffset() =
+        if (isRTL()) getBottomEllipsisWidth() else getCharactersCounterWidth()
 
-    private fun getCharactersCounterWidth(): Int {
-        return if (hasCharactersCounter()) textPaint.measureText(getCharactersCounterText()).toInt() else 0
-    }
+    private fun getCharactersCounterWidth() =
+        if (hasCharactersCounter()) textPaint.measureText(getCharactersCounterText()).toInt() else 0
 
-    private fun getBottomEllipsisWidth(): Int {
-        return if (singleLineEllipsis) bottomEllipsisSize * 5 + 4f.dp2px(context) else 0
-    }
+    private fun getBottomEllipsisWidth() =
+        if (singleLineEllipsis) bottomEllipsisSize * 5 + 4f.dp2px(context) else 0
 
     override fun onLayout(changed: Boolean, left: Int, top: Int, right: Int, bottom: Int) {
         super.onLayout(changed, left, top, right, bottom)
@@ -279,24 +308,29 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         if (width == 0)
             return false
 
-        if (errorText != null) {
+        errorText?.let {
             textPaint.textSize = bottomTextSize
 
-            val alignment = if (gravity and Gravity.RIGHT == Gravity.RIGHT || isRTL())
-                Layout.Alignment.ALIGN_OPPOSITE
-            else if (gravity and Gravity.LEFT == Gravity.LEFT)
-                Layout.Alignment.ALIGN_NORMAL
-            else
-                Layout.Alignment.ALIGN_CENTER
+            val alignment =
+                if (gravity and Gravity.END == Gravity.END || isRTL()) Layout.Alignment.ALIGN_OPPOSITE
+                else if (gravity and Gravity.START == Gravity.START) Layout.Alignment.ALIGN_NORMAL
+                else Layout.Alignment.ALIGN_CENTER
 
-            var viewWidth = width - getBottomTextLeftOffset() - getBottomTextRightOffset() - paddingLeft - paddingRight
+            val viewWidth =
+                width - getBottomTextLeftOffset() - getBottomTextRightOffset() - paddingLeft - paddingRight
 
 
             bottomTextLayout = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
                 StaticLayout(errorText, textPaint, viewWidth, alignment, 1.0f, 0.0f, true)
             else {
                 val builder =
-                    StaticLayout.Builder.obtain(errorText!!, 0, errorText!!.length, textPaint, viewWidth)
+                    StaticLayout.Builder.obtain(
+                        errorText!!,
+                        0,
+                        errorText!!.length,
+                        textPaint,
+                        viewWidth
+                    )
                 builder.build()
             }
         }
@@ -308,23 +342,29 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         if (width == 0)
             return false
 
-        if (labelText != null) {
+        labelText?.let {
             textPaint.textSize = labelTextSize
+            textPaint.typeface = Typeface.create(Typeface.DEFAULT, labelTextStyle)
 
-            val alignment = if (gravity and Gravity.RIGHT == Gravity.RIGHT || isRTL())
-                Layout.Alignment.ALIGN_OPPOSITE
-            else if (gravity and Gravity.LEFT == Gravity.LEFT)
-                Layout.Alignment.ALIGN_NORMAL
-            else
-                Layout.Alignment.ALIGN_CENTER
+            val alignment =
+                if (gravity and Gravity.END == Gravity.END || isRTL()) Layout.Alignment.ALIGN_OPPOSITE
+                else if (gravity and Gravity.START == Gravity.START) Layout.Alignment.ALIGN_NORMAL
+                else Layout.Alignment.ALIGN_CENTER
 
-            var viewWidth = width - getBottomTextLeftOffset() - getBottomTextRightOffset() - paddingLeft - paddingRight
+            val viewWidth =
+                width - getBottomTextLeftOffset() - getBottomTextRightOffset() - paddingLeft - paddingRight
 
             labelTextLayout = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
                 StaticLayout(labelText, textPaint, viewWidth, alignment, 1.0f, 0.0f, true)
             } else {
                 val builder =
-                    StaticLayout.Builder.obtain(labelText.toString(), 0, labelText!!.length, textPaint, viewWidth)
+                    StaticLayout.Builder.obtain(
+                        labelText.toString(),
+                        0,
+                        labelText!!.length,
+                        textPaint,
+                        viewWidth
+                    )
                 builder.build()
             }
         }
@@ -338,14 +378,23 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         var lineStartY = scrollY + height - paddingBottom
 
         // underline
-        if (!isInternalValid()) // not valid
-            paint.color = errorColor
-        else if (!isEnabled) // disabled
-            paint.color = baseColor
-        else if (hasFocus()) // focused
-            paint.color = primaryColor
-        else  // normal
-            paint.color = baseColor
+        if (forceChangeLineColor) {
+            forceChangeLineColor = false
+            when (changeColor) {
+                COLOR.BASE -> paint.color = baseColor
+                COLOR.PRIMARY -> paint.color = primaryColor
+                COLOR.ERROR -> paint.color = errorColor
+            }
+        } else {
+            if (!isInternalValid()) // not valid
+                paint.color = errorColor
+            else if (!isEnabled) // disabled
+                paint.color = baseColor
+            else if (hasFocus()) // focused
+                paint.color = primaryColor
+            else  // normal
+                paint.color = baseColor
+        }
 
         lineStartY += underlineSpacing // edittext 글자 아래부터의 간격 추가
         canvas.drawRect(
@@ -359,24 +408,25 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
         // draw icon
         paint.alpha = 255
         if (hasFocus() && !TextUtils.isEmpty(text) && icon != null) {
-            val iconRight = endX + iconPadding + (iconOuterWidth - icon!!.width) / 2 - iconOuterWidth - iconPadding
-            val iconTop = lineStartY - underlineSpacing - iconOuterHeight + (iconOuterHeight - icon!!.height) / 2
+            val iconRight =
+                endX + iconPadding + (iconOuterWidth - icon!!.width) / 2 - iconOuterWidth - iconPadding
+            val iconTop =
+                lineStartY - underlineSpacing - iconOuterHeight + (iconOuterHeight - icon!!.height) / 2
             canvas.drawBitmap(icon!!, iconRight.toFloat(), iconTop.toFloat(), paint)
         }
 
         textPaint.textSize = labelTextSize
-        var textMetrics = textPaint.fontMetrics  // label text의 descent를 사용하기 위함
 
         // draw label text
         if (!hideLabelText && labelTextLayout != null) {
             textPaint.textSize = labelTextSize
-            textPaint.color = defaultLabelColor
+            textPaint.color = labelTextColor
 
             canvas.save()
             if (isRTL())
-                canvas.translate((endX - labelTextLayout!!.width).toFloat(), scrollY.toFloat() - textMetrics.descent)
+                canvas.translate((endX - labelTextLayout!!.width).toFloat(), scrollY.toFloat())
             else
-                canvas.translate(startX.toFloat(), scrollY.toFloat() - textMetrics.descent)
+                canvas.translate(startX.toFloat(), scrollY.toFloat())
 
             labelTextLayout!!.draw(canvas)
             canvas.restore()
@@ -384,7 +434,6 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
         // draw bottom text
         textPaint.textSize = bottomTextSize
-        textMetrics = textPaint.fontMetrics
 
         if (!hideBottomText && bottomTextLayout != null) {
             textPaint.textSize = bottomTextSize
@@ -392,11 +441,15 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
             canvas.save()
             if (isRTL())
-                canvas.translate((endX - bottomTextLayout!!.width).toFloat(),
-                    ((lineStartY + bottomSpacing/* + underlineSize.dp2px(context)*/).toFloat()))
+                canvas.translate(
+                    (endX - bottomTextLayout!!.width).toFloat(),
+                    ((lineStartY + bottomSpacing/* + underlineSize.dp2px(context)*/).toFloat())
+                )
             else
-                canvas.translate(startX.toFloat(),
-                    ((lineStartY + bottomSpacing/* + underlineSize.dp2px(context)*/).toFloat()))
+                canvas.translate(
+                    startX.toFloat(),
+                    ((lineStartY + bottomSpacing/* + underlineSize.dp2px(context)*/).toFloat())
+                )
 
             bottomTextLayout!!.draw(canvas)
             canvas.restore()
@@ -448,33 +501,33 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
     }
 
     override fun onTouchEvent(event: MotionEvent?): Boolean {
-        when(event!!.action) {
-            MotionEvent.ACTION_DOWN -> {
-                if (insideClearButton(event)) {
-                    clearButtonTouched = true
-                    clearButtonClicking = true
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (clearButtonClicking && !insideClearButton(event))
-                    clearButtonClicking = false
-            }
-            MotionEvent.ACTION_UP -> {
-                if (clearButtonClicking) {
-                    if (!TextUtils.isEmpty(text)) {
-                        text = null
-                        error = null
+        event?.let {
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    if (insideClearButton(event)) {
+                        clearButtonTouched = true
+                        clearButtonClicking = true
                     }
-                    clearButtonClicking = false
                 }
-                if (clearButtonTouched) {
+                MotionEvent.ACTION_MOVE -> {
+                    if (clearButtonClicking && !insideClearButton(event))
+                        clearButtonClicking = false
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (clearButtonClicking) {
+                        if (!TextUtils.isEmpty(text)) {
+                            text = null
+                            error = null
+                        }
+                        clearButtonClicking = false
+                    }
+                    if (clearButtonTouched) clearButtonTouched = false
                     clearButtonTouched = false
                 }
-                clearButtonTouched = false
-            }
-            MotionEvent.ACTION_CANCEL -> {
-                clearButtonTouched = false
-                clearButtonClicking = false
+                MotionEvent.ACTION_CANCEL -> {
+                    clearButtonTouched = false
+                    clearButtonClicking = false
+                }
             }
         }
 
@@ -503,7 +556,12 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     }
 
-    override fun onTextChanged(text: CharSequence?, start: Int, lengthBefore: Int, lengthAfter: Int) {
+    override fun onTextChanged(
+        text: CharSequence?,
+        start: Int,
+        lengthBefore: Int,
+        lengthAfter: Int
+    ) {
         /*error = if (hasFocus() && (text!!.length < minCharacters || text!!.length > maxCharacters))
             "${minCharacters}자 이상 ${maxCharacters}자 이하로 입력해주세요."
         else
@@ -514,5 +572,16 @@ class JPEditText : AppCompatEditText, TextWatcher, View.OnFocusChangeListener, V
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         return false
+    }
+
+    fun forceChangeColor(color: COLOR) {
+        forceChangeLineColor = true
+        changeColor = color
+    }
+
+    companion object {
+        enum class COLOR {
+            BASE, PRIMARY, ERROR
+        }
     }
 }

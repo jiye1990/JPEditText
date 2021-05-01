@@ -5,6 +5,7 @@
         <attr name="jp_errorColor" format="color" />
         <attr name="jp_primaryColor" format="color" />
         <attr name="jp_underlineColor" format="color" />
+        <attr name="jp_labelTextColor" format="color" />
 
         <attr name="jp_labelText" format="string" />
 
@@ -26,5 +27,10 @@
 
         <attr name="jp_singleLineEllipsis" format="boolean" />
         <attr name="jp_minBottomTextLines" format="integer" />
+
+        <attr name="jp_labelTextStyle">
+            <flag name="normal" value="0" />
+            <flag name="bold" value="1" />
+        </attr>
     </declare-styleable>
 </resources>

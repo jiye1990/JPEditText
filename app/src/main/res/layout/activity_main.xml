@@ -23,7 +23,9 @@
             app:jp_iconOuterHeight="16dp"
             app:jp_iconOuterWidth="16dp"
             app:jp_iconRight="@drawable/ic_text_clear"
+            app:jp_labelText="라벨입니다"
             app:jp_labelTextSize="@dimen/label_text_size"
+            app:jp_labelTextStyle="bold"
             app:jp_maxCharacters="16"
             app:jp_minCharacters="8"
             app:layout_constraintLeft_toLeftOf="parent"
@@ -36,7 +38,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="16sp"
-            android:visibility="visible"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/jpEditText" />
